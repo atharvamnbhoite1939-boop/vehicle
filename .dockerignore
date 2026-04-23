@@ -1,0 +1,12 @@
+__pycache__
+*.pyc
+*.pyo
+model.pkl
+generate_dataset.py
+DEPLOYMENT_GUIDE.md
+*.md
+.git
+.gitignore
+index (1).html
+index (2).html
+requirements (1).txt

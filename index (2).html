@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vehicle Maintenance Predictor</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: #e0e0e0;
+    }
+    header {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header .logo { font-size: 2rem; }
+    header h1 { font-size: 1.5rem; font-weight: 700; color: #4fc3f7; }
+    header small { color: #90caf9; font-size: 0.85rem; }
+
+    .badge {
+      margin-left: auto;
+      background: #00c853;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-card .value { font-size: 2rem; font-weight: 700; color: #4fc3f7; }
+    .stat-card .label { font-size: 0.8rem; color: #90a4ae; margin-top: 4px; }
+
+    .card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    .card h2 { font-size: 1.1rem; color: #4fc3f7; margin-bottom: 24px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .field label {
+      display: block;
+      font-size: 0.82rem;
+      color: #90a4ae;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .field input, .field select {
+      width: 100%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      transition: border 0.2s;
+    }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: #4fc3f7;
+    }
+    .field select option { background: #1a1a2e; }
+
+    .btn {
+      width: 100%;
+      margin-top: 24px;
+      padding: 14px;
+      background: linear-gradient(135deg, #0288d1, #4fc3f7);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(79,195,247,0.3); }
+
+    .result-box {
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 1.4rem;
+      font-weight: 700;
+      border: 2px solid;
+    }
+    .result-good  { background: rgba(0,200,83,0.1);  border-color: #00c853; color: #69f0ae; }
+    .result-warn  { background: rgba(255,152,0,0.1); border-color: #ff9800; color: #ffcc02; }
+    .result-error { background: rgba(244,67,54,0.1); border-color: #f44336; color: #ef9a9a; }
+
+    .cm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      max-width: 200px;
+      margin: 12px auto 0;
+    }
+    .cm-cell {
+      background: rgba(79,195,247,0.15);
+      border: 1px solid rgba(79,195,247,0.3);
+      padding: 12px;
+      text-align: center;
+      border-radius: 6px;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    footer {
+      text-align: center;
+      padding: 30px;
+      color: #546e7a;
+      font-size: 0.8rem;
+    }
+    footer span { color: #4fc3f7; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="logo">🚗</span>
+    <div>
+      <h1>Vehicle Maintenance Predictor</h1>
+      <small>Powered by Machine Learning · Deployed on Google Cloud Run</small>
+    </div>
+    <span class="badge">GCP Live</span>
+  </header>
+
+  <main>
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="value">{{ accuracy }}%</div>
+        <div class="label">Model Accuracy</div>
+      </div>
+      <div class="stat-card">
+        <div class="value">7</div>
+        <div class="label">Input Features</div>
+      </div>
+      <div class="stat-card">
+        <div class="value">LR</div>
+        <div class="label">Linear Regression</div>
+      </div>
+    </div>
+
+    <!-- Result Banner -->
+    {% if result %}
+      {% if 'Good' in result %}
+        <div class="result-box result-good">{{ result }}</div>
+      {% else %}
+        <div class="result-box result-warn">{{ result }}</div>
+      {% endif %}
+    {% elif error %}
+      <div class="result-box result-error">Error: {{ error }}</div>
+    {% endif %}
+
+    <!-- Prediction Form -->
+    <div class="card">
+      <h2>🔍 Enter Vehicle Details</h2>
+      <form action="/predict" method="POST">
+        <div class="grid-2">
+          <div class="field">
+            <label>Mileage (km/l)</label>
+            <input type="number" step="0.1" name="mileage"
+              value="{{ form_data.mileage if form_data else '' }}" placeholder="e.g. 15.5" required/>
+          </div>
+          <div class="field">
+            <label>Reported Issues</label>
+            <input type="number" name="reported_issues"
+              value="{{ form_data.reported_issues if form_data else '' }}" placeholder="e.g. 3" required/>
+          </div>
+          <div class="field">
+            <label>Vehicle Age (years)</label>
+            <input type="number" name="vehicle_age"
+              value="{{ form_data.vehicle_age if form_data else '' }}" placeholder="e.g. 5" required/>
+          </div>
+          <div class="field">
+            <label>Engine Size (L)</label>
+            <input type="number" step="0.1" name="engine_size"
+              value="{{ form_data.engine_size if form_data else '' }}" placeholder="e.g. 1.8" required/>
+          </div>
+          <div class="field">
+            <label>Odometer Reading (km)</label>
+            <input type="number" name="odometer_reading"
+              value="{{ form_data.odometer_reading if form_data else '' }}" placeholder="e.g. 45000" required/>
+          </div>
+          <div class="field">
+            <label>Reported Issues (count)</label>
+            <input type="number" name="reported_issues"
+              value="{{ form_data.reported_issues if form_data else '' }}" placeholder="e.g. 2" required/>
+          </div>
+          <div class="field">
+            <label>Service History</label>
+            <select name="service_history">
+              <option value="1" {% if form_data and form_data.service_history == '1' %}selected{% endif %}>Yes (1)</option>
+              <option value="0" {% if form_data and form_data.service_history == '0' %}selected{% endif %}>No (0)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Accident History</label>
+            <select name="accident_history">
+              <option value="0" {% if form_data and form_data.accident_history == '0' %}selected{% endif %}>No (0)</option>
+              <option value="1" {% if form_data and form_data.accident_history == '1' %}selected{% endif %}>Yes (1)</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn">⚡ Predict Maintenance Need</button>
+      </form>
+    </div>
+
+    <!-- Confusion Matrix -->
+    <div class="card">
+      <h2>📊 Model Confusion Matrix</h2>
+      <div class="cm-grid">
+        {% for row in confusion_matrix %}
+          {% for val in row %}
+            <div class="cm-cell">{{ val }}</div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+      <p style="text-align:center; color:#546e7a; font-size:0.8rem; margin-top:10px;">
+        TN | FP | FN | TP
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    DSBDA Cloud Project · Deployed on <span>Google Cloud Run</span> · Built with Flask + scikit-learn
+  </footer>
+</body>
+</html>
